@@ -1,5 +1,8 @@
 name: 'pr-notifications'
-description: 'Generate notifications for expired pull requests. A pull request is considered expired depending on the `default-ttl` and/or `labels-ttl`'
+description: 'Generate notifications for expired pull requests.'
+branding:
+  icon: 'message-circle'
+  color: 'orange'
 inputs:
   access-token:
     description: 'GitHub access token'
