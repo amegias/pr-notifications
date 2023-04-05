@@ -1,0 +1,49 @@
+on:
+  workflow_dispatch:
+    inputs:
+      default-ttl:
+        description: 'Default TTL for PRs'
+        required: false
+        default: '259200' # 3 days
+      labels-ttl:
+        description: 'TTL per label for PRs'
+        required: false
+        default: '{ "bug": 86400 }' # bug: 1 day
+      pull-request-number:
+        description: 'The number of the pull request to generate notifications. If it is not defined, it will retrieve all the pull requests of the repository.'
+        required: false
+
+jobs:
+  get-notifications:
+    name: Get notifications
+    permissions: read-all
+    runs-on: ubuntu-latest
+    outputs:
+      notifications: ${{ steps.generator.outputs.notifications }}
+    steps:
+      # we need to check out the repository since it will be executed locally.
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Generation step
+        # Local/Private action
+        uses: ./
+        id: generator
+        with:
+          access-token: ${{ secrets.GITHUB_TOKEN }}
+          default-ttl: ${{ github.event.inputs.default-ttl }}
+          labels-ttl: ${{ github.event.inputs.labels-ttl }}
+          pull-request-number: ${{ github.event.inputs.pull-request-number }}
+  send-notification:
+    name: (Simulate) Send notification
+    needs: get-notifications
+    if: ${{ needs.get-notifications.outputs.notifications != '[]' }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        notifications: ${{ fromJSON(needs.get-notifications.outputs.notifications) }}
+    steps:
+      - name: Print result
+        env:
+          URL: ${{ toJSON(matrix.notifications.pullRequest.url) }}
+          RECIPIENTS: ${{ toJSON(matrix.notifications.recipient.login) }}
+        run: echo "$URL must be reviewed by $RECIPIENTS"

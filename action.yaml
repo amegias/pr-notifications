@@ -1,0 +1,21 @@
+name: 'pr-notifications'
+description: 'Generate notifications for expired pull requests. A pull request is considered expired depending on the `default-ttl` and/or `labels-ttl`'
+inputs:
+  access-token:
+    description: 'GitHub access token'
+    required: true
+  default-ttl:
+    description: 'Default TTL for PRs'
+    required: false
+  pull-request-number:
+    description: 'The number of the pull request to generate notifications. If it is not defined, it will retrieve all the pull requests of the repository.'
+    required: false
+  labels-ttl:
+    description: 'TTL per label for PRs'
+    required: false
+outputs:
+  notifications:
+    description: 'Generated notifications'
+runs:
+  using: 'node16'
+  main: 'dist/index.js'
