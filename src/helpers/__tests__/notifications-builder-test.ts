@@ -24,8 +24,8 @@ describe('buildNotificationsFrom', () => {
     const user2 = buildUser(22);
     const user3 = buildUser(22);
     const pullRequests = [
-      buildPullRequest(1, [], [reviewer1, unknownReviewer]),
-      buildPullRequest(2, [], [reviewer1, reviewer2])
+      buildPullRequest(1, new Set(), [reviewer1, unknownReviewer]),
+      buildPullRequest(2, new Set(), [reviewer1, reviewer2])
     ];
     const usersByLogin = {
       [user1.login]: user1,

@@ -21,6 +21,7 @@ ACCESS_TOKEN = "" # the token got from https://github.com/settings/tokens?type=b
 DEFAULT_TTL = "259200" # for example, 3 days.
 LABELS_TTL = '{ "bug": "86400" }'
 PULL_REQUEST_NUMBER = "" # if you want to execute it checking only that pull request or all of them.
+LABEL_TO_SKIP_PR = "skip-notifications" # If a pull request has this label, the reviewers will not be notified.
 ```
 
 Then:

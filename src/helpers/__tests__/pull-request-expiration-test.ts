@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon';
-import { buildLabel, buildPullRequest } from '../../__tests__/mother';
+import { buildPullRequest } from '../../__tests__/mother';
 import { testEnvironment } from '../../__tests__/utils';
 import { isPullRequestExpired } from '../pull-request-expiration';
 
@@ -9,8 +9,8 @@ const TAGS_TTL = {
   label1: `${3600 * 2}`, // 2h
   label2: `${3600}` // 1h
 };
-const LABEL1 = buildLabel(11, 'label1');
-const LABEL2 = buildLabel(22, 'label2');
+const LABEL1 = 'label1';
+const LABEL2 = 'label2';
 
 describe('isPullRequestExpired', () => {
   test.each([
@@ -35,7 +35,7 @@ describe('isPullRequestExpired', () => {
       environment.inputs.defaultTTL = defaultTTL;
       const pullRequest = buildPullRequest(
         1,
-        labels,
+        new Set(labels),
         [],
         false,
         'open',

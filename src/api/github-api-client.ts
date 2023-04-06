@@ -2,8 +2,6 @@
 
 import {
   Environment,
-  Label,
-  LabelDto,
   PullRequest,
   PullRequestDto,
   Reviewer,
@@ -39,11 +37,6 @@ export const getUser = async (
 
 // Pull request:
 
-const mapLabel = (label: LabelDto): Label => ({
-  id: label.id,
-  name: label.name
-});
-
 const mapRequestedReviewer = (requestedReviewer: ReviewerDto): Reviewer => ({
   id: requestedReviewer.id,
   login: requestedReviewer.login
@@ -53,7 +46,7 @@ const mapPullRequest = (pullRequest: PullRequestDto): PullRequest => ({
   id: pullRequest.id,
   title: pullRequest.title,
   number: pullRequest.number,
-  labels: pullRequest.labels.map(mapLabel),
+  labels: new Set(pullRequest.labels.map((label) => label.name)),
   url: pullRequest.html_url,
   draft: pullRequest.draft,
   state: pullRequest.state,

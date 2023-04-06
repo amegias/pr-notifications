@@ -1,5 +1,4 @@
 import {
-  Label,
   LabelDto,
   PullRequest,
   PullRequestDto,
@@ -47,7 +46,7 @@ export const buildPullRequestDto = (
 
 export const buildPullRequest = (
   id: number,
-  labels: Label[],
+  labels: Set<string>,
   requestedReviewers: Reviewer[],
   draft: boolean | undefined = true,
   state: string | undefined = 'closed',
@@ -64,10 +63,6 @@ export const buildPullRequest = (
   state
 });
 
-export const buildLabel = (
-  id: number,
-  name: string | undefined = `label${id}`
-): Label => ({ id, name });
 export const buildLabelDto = (id: number): LabelDto => ({
   id,
   name: `label${id}`

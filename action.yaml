@@ -16,6 +16,9 @@ inputs:
   labels-ttl:
     description: 'TTL per label for PRs'
     required: false
+  label-to-skip-pr:
+    description: 'If a PR has this label, the action will not notify to its reviewers.'
+    required: false
 outputs:
   notifications:
     description: 'Generated notifications'

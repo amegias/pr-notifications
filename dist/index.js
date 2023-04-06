@@ -46077,10 +46077,6 @@ const getUser = (environment, login) => __awaiter(void 0, void 0, void 0, functi
 });
 exports.getUser = getUser;
 // Pull request:
-const mapLabel = (label) => ({
-    id: label.id,
-    name: label.name
-});
 const mapRequestedReviewer = (requestedReviewer) => ({
     id: requestedReviewer.id,
     login: requestedReviewer.login
@@ -46089,7 +46085,7 @@ const mapPullRequest = (pullRequest) => ({
     id: pullRequest.id,
     title: pullRequest.title,
     number: pullRequest.number,
-    labels: pullRequest.labels.map(mapLabel),
+    labels: new Set(pullRequest.labels.map((label) => label.name)),
     url: pullRequest.html_url,
     draft: pullRequest.draft,
     state: pullRequest.state,
@@ -46130,6 +46126,11 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getExpiredPullRequests = void 0;
 const github_api_client_1 = __nccwpck_require__(6301);
 const pull_request_expiration_1 = __nccwpck_require__(6558);
+const hasLabelToSkip = (environment, pullRequest) => {
+    return (environment.inputs.labelToSkipPR !== undefined &&
+        environment.inputs.labelToSkipPR !== '' &&
+        pullRequest.labels.has(environment.inputs.labelToSkipPR));
+};
 const getExpiredPullRequests = (environment) => __awaiter(void 0, void 0, void 0, function* () {
     const pullRequestNumber = environment.inputs.pullRequestNumber;
     let pullRequests;
@@ -46145,6 +46146,7 @@ const getExpiredPullRequests = (environment) => __awaiter(void 0, void 0, void 0
     return pullRequests.filter((pullRequest) => pullRequest.state === 'open' &&
         pullRequest.draft === false &&
         pullRequest.requestedReviewers.length &&
+        !hasLabelToSkip(environment, pullRequest) &&
         (0, pull_request_expiration_1.isPullRequestExpired)(environment, pullRequest));
 });
 exports.getExpiredPullRequests = getExpiredPullRequests;
@@ -46265,9 +46267,7 @@ const isPullRequestExpired = (environment, pullRequest) => {
     const now = environment.dependencies.now();
     const interval = luxon_1.Interval.fromDateTimes(created, now);
     const diffInSeconds = interval.length('seconds');
-    const ttl = pullRequest.labels
-        .map((label) => label.name)
-        .reduce((currentTTL, label) => {
+    const ttl = Array.from(pullRequest.labels).reduce((currentTTL, label) => {
         const labelTTL = environment.inputs.labelsTTL[label];
         if (labelTTL !== undefined) {
             return Math.min(parseInt(labelTTL), currentTTL);
@@ -46358,7 +46358,8 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
                     ? JSON.parse(core.getInput('labels-ttl'))
                     : {},
                 defaultTTL: core.getInput('default-ttl'),
-                pullRequestNumber: core.getInput('pull-request-number')
+                pullRequestNumber: core.getInput('pull-request-number'),
+                labelToSkipPR: core.getInput('label-to-skip-pr')
             }
         };
         const notifications = yield (0, get_notifications_1.getNotifications)(environment);

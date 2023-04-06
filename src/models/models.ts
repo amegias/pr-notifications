@@ -19,6 +19,7 @@ export type Environment = {
     labelsTTL: { [name: string]: string };
     defaultTTL?: string;
     pullRequestNumber?: string;
+    labelToSkipPR?: string;
   };
 };
 
@@ -27,22 +28,16 @@ export type User = {
   email: string;
 };
 
-export type Label = {
-  id: number;
-  name: string;
-};
-
 export type Reviewer = {
   id: number;
   login: string;
 };
 
-// TODO: ids en number?
 export type PullRequest = {
   id: number;
   title: string;
   number: number;
-  labels: Label[];
+  labels: Set<string>;
   url: string;
   draft: boolean;
   state: string;
