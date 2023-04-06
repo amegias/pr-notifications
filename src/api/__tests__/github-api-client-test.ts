@@ -1,5 +1,4 @@
 import {
-  buildLabel,
   buildLabelDto,
   buildPullRequest,
   buildPullRequestDto,
@@ -55,16 +54,11 @@ describe('getPullRequests', () => {
       { state: 'open' }
     );
     expect(pullRequests).toStrictEqual([
-      buildPullRequest(
-        1,
-        [buildLabel(11)],
-        [buildReviewer(111), buildReviewer(222)]
-      ),
-      buildPullRequest(
-        2,
-        [buildLabel(22), buildLabel(33)],
-        [buildReviewer(222)]
-      )
+      buildPullRequest(1, new Set(['label11']), [
+        buildReviewer(111),
+        buildReviewer(222)
+      ]),
+      buildPullRequest(2, new Set(['label22', 'label33']), [buildReviewer(222)])
     ]);
   });
 });
@@ -89,11 +83,10 @@ describe('getPullRequest', () => {
       undefined
     );
     expect(pullRequests).toStrictEqual(
-      buildPullRequest(
-        1,
-        [buildLabel(11), buildLabel(22)],
-        [buildReviewer(111), buildReviewer(222)]
-      )
+      buildPullRequest(1, new Set(['label11', 'label22']), [
+        buildReviewer(111),
+        buildReviewer(222)
+      ])
     );
   });
 });

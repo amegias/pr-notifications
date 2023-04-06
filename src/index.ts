@@ -35,7 +35,8 @@ const run = async (): Promise<void> => {
           ? JSON.parse(core.getInput('labels-ttl'))
           : {},
         defaultTTL: core.getInput('default-ttl'),
-        pullRequestNumber: core.getInput('pull-request-number')
+        pullRequestNumber: core.getInput('pull-request-number'),
+        labelToSkipPR: core.getInput('label-to-skip-pr')
       }
     };
     const notifications = await getNotifications(environment);

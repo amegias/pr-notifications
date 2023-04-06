@@ -24,6 +24,9 @@ TTLs by labels. If the pull request contains any label of them, the action will 
 ### `pull-request-number` (Optional)
 
 The pull request to generate notifications. If it is null, the action will get all the pull requests of the repository.
+### `label-to-skip-pr` (Optional)
+
+If a PR has this label, the action will not notify to its reviewers.
 
 
 ## Outputs

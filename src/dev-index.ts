@@ -35,7 +35,8 @@ const devRun = async (): Promise<void> => {
         ? JSON.parse(process.env.LABELS_TTL)
         : {},
       defaultTTL: process.env.DEFAULT_TTL,
-      pullRequestNumber: process.env.PULL_REQUEST_NUMBER
+      pullRequestNumber: process.env.PULL_REQUEST_NUMBER,
+      labelToSkipPR: process.env.LABEL_TO_SKIP_PR
     }
   };
   const notifications = await getNotifications(environment);
