@@ -11,6 +11,7 @@ const expiredPullRequest = (id: number): PullRequest =>
     id,
     new Set(),
     [buildReviewer(11), buildReviewer(22)],
+    'anOwner',
     false,
     'open'
   );
