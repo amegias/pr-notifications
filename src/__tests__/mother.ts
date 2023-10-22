@@ -2,6 +2,7 @@ import {
   LabelDto,
   PullRequest,
   PullRequestDto,
+  PullRequestUserDto,
   Reviewer,
   ReviewerDto,
   User,
@@ -31,7 +32,8 @@ export const buildReviewer = (id: number): Reviewer => ({
 export const buildPullRequestDto = (
   id: number,
   labels: LabelDto[],
-  requested_reviewers: ReviewerDto[]
+  requested_reviewers: ReviewerDto[],
+  user: PullRequestUserDto
 ): PullRequestDto => ({
   created_at: '2023-01-25T00:00:00Z',
   id,
@@ -41,13 +43,15 @@ export const buildPullRequestDto = (
   state: 'closed',
   draft: true,
   title: `title ${id}`,
-  html_url: `https://api.github.com/repos/whatever/${id}`
+  html_url: `https://api.github.com/repos/whatever/${id}`,
+  user
 });
 
 export const buildPullRequest = (
   id: number,
   labels: Set<string>,
   requestedReviewers: Reviewer[],
+  owner: string,
   draft: boolean | undefined = true,
   state: string | undefined = 'closed',
   createdAt: string | undefined = '2023-01-25T00:00:00Z'
@@ -60,7 +64,8 @@ export const buildPullRequest = (
   labels,
   url: `https://api.github.com/repos/whatever/${id}`,
   requestedReviewers,
-  state
+  state,
+  owner
 });
 
 export const buildLabelDto = (id: number): LabelDto => ({

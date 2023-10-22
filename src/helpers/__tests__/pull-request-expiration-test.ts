@@ -37,6 +37,7 @@ describe('isPullRequestExpired', () => {
         1,
         new Set(labels),
         [],
+        'anOwner',
         false,
         'open',
         createdAt

@@ -44,10 +44,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        notifications: ${{ fromJSON(needs.get-notifications.outputs.notifications) }}
+        notification: ${{ fromJSON(needs.get-notifications.outputs.notifications) }}
     steps:
       - name: Print result
-        env:
-          URL: ${{ toJSON(matrix.notifications.pullRequest.url) }}
-          RECIPIENTS: ${{ toJSON(matrix.notifications.recipient.login) }}
-        run: echo "$URL must be reviewed by $RECIPIENTS"
+        run: echo "${{ matrix.notification.pullRequest.url }} must be reviewed by ${{ matrix.notification.recipient.login }}"

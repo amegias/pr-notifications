@@ -10,7 +10,6 @@ Given a default PR TTL and a set of TTL per label, it calculates if the PR is ex
 ### `access-token` (Required)
 
 The GitHub token needed to request info about the PRs of the repo and reviewers.
-**IMPORTANT**: This job must have `permissions: read-all` (See [the example](#example) for more info).
 
 ### `default-ttl` (Optional)
 
@@ -41,13 +40,12 @@ The notifications generated.
 jobs:
   get-notifications:
     name: Get notifications
-    permissions: read-all
     runs-on: ubuntu-latest
     outputs:
       notifications: ${{ steps.generator.outputs.notifications }}
     steps:
       - name: Generation step
-        uses: amegias/pr-notifications@v1.0
+        uses: amegias/pr-notifications@vX.Y.Z
         id: generator
         with:
           access-token: ${{ secrets.GITHUB_TOKEN }}
@@ -65,7 +63,8 @@ An array of notifications with the pull request and recipient info.
     "pullRequest":{
       "id":2,
       "title":"My PR #2",
-      "url":"https://api.github.com/repos/me/myrepo/pulls/2"
+      "url":"https://api.github.com/repos/me/myrepo/pulls/2",
+      "owner": "anOwner"
     },
     "recipient":{
       "login":"login2",
@@ -76,7 +75,8 @@ An array of notifications with the pull request and recipient info.
     "pullRequest":{
       "id":2,
       "title":"My PR #2",
-      "url":"https://api.github.com/repos/me/myrepo/pulls/2"
+      "url":"https://api.github.com/repos/me/myrepo/pulls/2",
+      "owner": "anOwner"
     },
     "recipient":{
       "login":"login3",
@@ -87,7 +87,8 @@ An array of notifications with the pull request and recipient info.
     "pullRequest":{
       "id":3,
       "title":"My PR #3",
-      "url":"https://api.github.com/repos/me/myrepo/pulls/3"
+      "url":"https://api.github.com/repos/me/myrepo/pulls/3",
+      "owner": "otherOwner"
     },
     "recipient":{
       "login":"login3",
@@ -98,7 +99,8 @@ An array of notifications with the pull request and recipient info.
     "pullRequest":{
       "id":3,
       "title":"My PR #3",
-      "url":"https://api.github.com/repos/me/myrepo/pulls/3"
+      "url":"https://api.github.com/repos/me/myrepo/pulls/3",
+      "owner": "otherOwner"
     },
     "recipient":{
       "login":"login4",
@@ -109,7 +111,8 @@ An array of notifications with the pull request and recipient info.
     "pullRequest":{
       "id":3,
       "title":"My PR #3",
-      "url":"https://api.github.com/repos/me/myrepo/pulls/3"
+      "url":"https://api.github.com/repos/me/myrepo/pulls/3",
+      "owner": "otherOwner"
     },
     "recipient":{
       "login":"login5",
@@ -131,10 +134,7 @@ send-notification:
         notifications: ${{ fromJSON(needs.get-notifications.outputs.notifications) }}
     steps:
       - name: Print result
-        env:
-          URL: ${{ toJSON(matrix.notifications.pullRequest.url) }}
-          RECIPIENTS: ${{ toJSON(matrix.notifications.recipient.login) }}
-        run: echo "$URL must be reviewed by $RECIPIENTS"
+        run: echo "${{ matrix.notifications.pullRequest.url }} must be reviewed by ${{ matrix.notifications.recipient.login }}"
 ```
 
 ## Contributing

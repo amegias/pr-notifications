@@ -26,13 +26,23 @@ describe('getUsersByLogin', () => {
         Promise.resolve(buildUser(parseInt(login.replace('login', ''))))
       );
     const pullRequests = [
-      buildPullRequest(1, new Set(), [buildReviewer(11), buildReviewer(33)]),
-      buildPullRequest(2, new Set(), [
-        buildReviewer(11),
-        buildReviewer(22),
-        buildReviewer(33),
-        buildReviewer(44)
-      ])
+      buildPullRequest(
+        1,
+        new Set(),
+        [buildReviewer(11), buildReviewer(33)],
+        'anOwner'
+      ),
+      buildPullRequest(
+        2,
+        new Set(),
+        [
+          buildReviewer(11),
+          buildReviewer(22),
+          buildReviewer(33),
+          buildReviewer(44)
+        ],
+        'otherOwner'
+      )
     ];
 
     const users = await getUsersByLogin(environment, pullRequests);

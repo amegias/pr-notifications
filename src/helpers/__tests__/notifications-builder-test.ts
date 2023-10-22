@@ -24,8 +24,8 @@ describe('buildNotificationsFrom', () => {
     const user2 = buildUser(22);
     const user3 = buildUser(22);
     const pullRequests = [
-      buildPullRequest(1, new Set(), [reviewer1, unknownReviewer]),
-      buildPullRequest(2, new Set(), [reviewer1, reviewer2])
+      buildPullRequest(1, new Set(), [reviewer1, unknownReviewer], 'anOwner'),
+      buildPullRequest(2, new Set(), [reviewer1, reviewer2], 'otherOwner')
     ];
     const usersByLogin = {
       [user1.login]: user1,
@@ -42,7 +42,8 @@ describe('buildNotificationsFrom', () => {
           title: 'title 1',
           url: 'https://api.github.com/repos/whatever/1',
           number: 10,
-          createdAt: '2023-01-25T00:00:00Z'
+          createdAt: '2023-01-25T00:00:00Z',
+          owner: 'anOwner'
         },
         recipient: { login: 'login11', email: '11@whatever.com' }
       },
@@ -52,7 +53,8 @@ describe('buildNotificationsFrom', () => {
           title: 'title 2',
           url: 'https://api.github.com/repos/whatever/2',
           number: 20,
-          createdAt: '2023-01-25T00:00:00Z'
+          createdAt: '2023-01-25T00:00:00Z',
+          owner: 'otherOwner'
         },
         recipient: { login: 'login11', email: '11@whatever.com' }
       },
@@ -62,7 +64,8 @@ describe('buildNotificationsFrom', () => {
           title: 'title 2',
           url: 'https://api.github.com/repos/whatever/2',
           number: 20,
-          createdAt: '2023-01-25T00:00:00Z'
+          createdAt: '2023-01-25T00:00:00Z',
+          owner: 'otherOwner'
         },
         recipient: { login: 'login22', email: '22@whatever.com' }
       }

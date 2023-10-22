@@ -37,12 +37,14 @@ describe('getPullRequests', () => {
           buildPullRequestDto(
             1,
             [buildLabelDto(11)],
-            [buildReviewerDto(111), buildReviewerDto(222)]
+            [buildReviewerDto(111), buildReviewerDto(222)],
+            { login: 'anOwner' }
           ),
           buildPullRequestDto(
             2,
             [buildLabelDto(22), buildLabelDto(33)],
-            [buildReviewerDto(222)]
+            [buildReviewerDto(222)],
+            { login: 'otherOwner' }
           )
         ]
       });
@@ -54,11 +56,18 @@ describe('getPullRequests', () => {
       { state: 'open' }
     );
     expect(pullRequests).toStrictEqual([
-      buildPullRequest(1, new Set(['label11']), [
-        buildReviewer(111),
-        buildReviewer(222)
-      ]),
-      buildPullRequest(2, new Set(['label22', 'label33']), [buildReviewer(222)])
+      buildPullRequest(
+        1,
+        new Set(['label11']),
+        [buildReviewer(111), buildReviewer(222)],
+        'anOwner'
+      ),
+      buildPullRequest(
+        2,
+        new Set(['label22', 'label33']),
+        [buildReviewer(222)],
+        'otherOwner'
+      )
     ]);
   });
 });
@@ -72,7 +81,8 @@ describe('getPullRequest', () => {
         data: buildPullRequestDto(
           1,
           [buildLabelDto(11), buildLabelDto(22)],
-          [buildReviewerDto(111), buildReviewerDto(222)]
+          [buildReviewerDto(111), buildReviewerDto(222)],
+          { login: 'anOwner' }
         )
       });
 
@@ -83,10 +93,12 @@ describe('getPullRequest', () => {
       undefined
     );
     expect(pullRequests).toStrictEqual(
-      buildPullRequest(1, new Set(['label11', 'label22']), [
-        buildReviewer(111),
-        buildReviewer(222)
-      ])
+      buildPullRequest(
+        1,
+        new Set(['label11', 'label22']),
+        [buildReviewer(111), buildReviewer(222)],
+        'anOwner'
+      )
     );
   });
 });

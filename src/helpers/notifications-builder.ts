@@ -14,7 +14,8 @@ export const buildNotificationsFrom = (
               title: pullRequest.title,
               url: pullRequest.url,
               number: pullRequest.number,
-              createdAt: pullRequest.createdAt
+              createdAt: pullRequest.createdAt,
+              owner: pullRequest.owner
             },
             recipient: usersByLogin[reviewer.login]
           });

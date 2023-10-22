@@ -51,7 +51,8 @@ const mapPullRequest = (pullRequest: PullRequestDto): PullRequest => ({
   draft: pullRequest.draft,
   state: pullRequest.state,
   createdAt: pullRequest.created_at,
-  requestedReviewers: pullRequest.requested_reviewers.map(mapRequestedReviewer)
+  requestedReviewers: pullRequest.requested_reviewers.map(mapRequestedReviewer),
+  owner: pullRequest.user.login
 });
 
 export const getPullRequests = async (

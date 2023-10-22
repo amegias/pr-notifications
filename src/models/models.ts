@@ -43,6 +43,7 @@ export type PullRequest = {
   state: string;
   createdAt: string;
   requestedReviewers: Reviewer[];
+  owner: string;
 };
 
 export type Notification = {
@@ -52,6 +53,7 @@ export type Notification = {
     url: string;
     number: number;
     createdAt: string;
+    owner: string;
   };
   recipient: User;
 };
@@ -83,4 +85,9 @@ export type PullRequestDto = {
   state: string;
   created_at: string;
   requested_reviewers: ReviewerDto[];
+  user: PullRequestUserDto;
+};
+
+export type PullRequestUserDto = {
+  login: string;
 };
