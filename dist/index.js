@@ -9850,7 +9850,7 @@ var import_light = __toESM(__nccwpck_require__(1174));
 var import_core = __nccwpck_require__(6762);
 
 // pkg/dist-src/version.js
-var VERSION = "8.0.1";
+var VERSION = "8.1.0";
 
 // pkg/dist-src/wrap-request.js
 var noop = () => Promise.resolve();
@@ -37522,7 +37522,7 @@ class Fetch extends EE {
 }
 
 // https://fetch.spec.whatwg.org/#fetch-method
-async function fetch (input, init = {}) {
+function fetch (input, init = {}) {
   webidl.argumentLengthCheck(arguments, 1, { header: 'globalThis.fetch' })
 
   // 1. Let p be a new promise.
@@ -37605,7 +37605,7 @@ async function fetch (input, init = {}) {
   const processResponse = (response) => {
     // 1. If locallyAborted is true, terminate these substeps.
     if (locallyAborted) {
-      return
+      return Promise.resolve()
     }
 
     // 2. If response’s aborted flag is set, then:
@@ -37618,7 +37618,7 @@ async function fetch (input, init = {}) {
       //    deserializedError.
 
       abortFetch(p, request, responseObject, controller.serializedAbortReason)
-      return
+      return Promise.resolve()
     }
 
     // 3. If response is a network error, then reject p with a TypeError
@@ -37627,7 +37627,7 @@ async function fetch (input, init = {}) {
       p.reject(
         Object.assign(new TypeError('fetch failed'), { cause: response.error })
       )
-      return
+      return Promise.resolve()
     }
 
     // 4. Set responseObject to the result of creating a Response object,
@@ -38177,13 +38177,13 @@ async function mainFetch (fetchParams, recursive = false) {
 
 // https://fetch.spec.whatwg.org/#concept-scheme-fetch
 // given a fetch params fetchParams
-async function schemeFetch (fetchParams) {
+function schemeFetch (fetchParams) {
   // Note: since the connection is destroyed on redirect, which sets fetchParams to a
   // cancelled state, we do not want this condition to trigger *unless* there have been
   // no redirects. See https://github.com/nodejs/undici/issues/1776
   // 1. If fetchParams is canceled, then return the appropriate network error for fetchParams.
   if (isCancelled(fetchParams) && fetchParams.request.redirectCount === 0) {
-    return makeAppropriateNetworkError(fetchParams)
+    return Promise.resolve(makeAppropriateNetworkError(fetchParams))
   }
 
   // 2. Let request be fetchParams’s request.
@@ -38199,7 +38199,7 @@ async function schemeFetch (fetchParams) {
       // and body is the empty byte sequence as a body.
 
       // Otherwise, return a network error.
-      return makeNetworkError('about scheme is not supported')
+      return Promise.resolve(makeNetworkError('about scheme is not supported'))
     }
     case 'blob:': {
       if (!resolveObjectURL) {
@@ -38212,7 +38212,7 @@ async function schemeFetch (fetchParams) {
       // https://github.com/web-platform-tests/wpt/blob/7b0ebaccc62b566a1965396e5be7bb2bc06f841f/FileAPI/url/resources/fetch-tests.js#L52-L56
       // Buffer.resolveObjectURL does not ignore URL queries.
       if (blobURLEntry.search.length !== 0) {
-        return makeNetworkError('NetworkError when attempting to fetch resource.')
+        return Promise.resolve(makeNetworkError('NetworkError when attempting to fetch resource.'))
       }
 
       const blobURLEntryObject = resolveObjectURL(blobURLEntry.toString())
@@ -38220,7 +38220,7 @@ async function schemeFetch (fetchParams) {
       // 2. If request’s method is not `GET`, blobURLEntry is null, or blobURLEntry’s
       //    object is not a Blob object, then return a network error.
       if (request.method !== 'GET' || !isBlobLike(blobURLEntryObject)) {
-        return makeNetworkError('invalid method')
+        return Promise.resolve(makeNetworkError('invalid method'))
       }
 
       // 3. Let bodyWithType be the result of safely extracting blobURLEntry’s object.
@@ -38247,7 +38247,7 @@ async function schemeFetch (fetchParams) {
 
       response.body = body
 
-      return response
+      return Promise.resolve(response)
     }
     case 'data:': {
       // 1. Let dataURLStruct be the result of running the
@@ -38258,7 +38258,7 @@ async function schemeFetch (fetchParams) {
       // 2. If dataURLStruct is failure, then return a
       //    network error.
       if (dataURLStruct === 'failure') {
-        return makeNetworkError('failed to fetch the data URL')
+        return Promise.resolve(makeNetworkError('failed to fetch the data URL'))
       }
 
       // 3. Let mimeType be dataURLStruct’s MIME type, serialized.
@@ -38267,28 +38267,28 @@ async function schemeFetch (fetchParams) {
       // 4. Return a response whose status message is `OK`,
       //    header list is « (`Content-Type`, mimeType) »,
       //    and body is dataURLStruct’s body as a body.
-      return makeResponse({
+      return Promise.resolve(makeResponse({
         statusText: 'OK',
         headersList: [
           ['content-type', { name: 'Content-Type', value: mimeType }]
         ],
         body: safelyExtractBody(dataURLStruct.body)[0]
-      })
+      }))
     }
     case 'file:': {
       // For now, unfortunate as it is, file URLs are left as an exercise for the reader.
       // When in doubt, return a network error.
-      return makeNetworkError('not implemented... yet...')
+      return Promise.resolve(makeNetworkError('not implemented... yet...'))
     }
     case 'http:':
     case 'https:': {
       // Return the result of running HTTP fetch given fetchParams.
 
-      return await httpFetch(fetchParams)
+      return httpFetch(fetchParams)
         .catch((err) => makeNetworkError(err))
     }
     default: {
-      return makeNetworkError('unknown scheme')
+      return Promise.resolve(makeNetworkError('unknown scheme'))
     }
   }
 }
@@ -38307,7 +38307,7 @@ function finalizeResponse (fetchParams, response) {
 }
 
 // https://fetch.spec.whatwg.org/#fetch-finale
-async function fetchFinale (fetchParams, response) {
+function fetchFinale (fetchParams, response) {
   // 1. If response is a network error, then:
   if (response.type === 'error') {
     // 1. Set response’s URL list to « fetchParams’s request’s URL list[0] ».
@@ -38391,8 +38391,9 @@ async function fetchFinale (fetchParams, response) {
     } else {
       // 4. Otherwise, fully read response’s body given processBody, processBodyError,
       // and fetchParams’s task destination.
-      await fullyReadBody(response.body, processBody, processBodyError)
+      return fullyReadBody(response.body, processBody, processBodyError)
     }
+    return Promise.resolve()
   }
 }
 
@@ -38500,7 +38501,7 @@ async function httpFetch (fetchParams) {
 }
 
 // https://fetch.spec.whatwg.org/#http-redirect-fetch
-async function httpRedirectFetch (fetchParams, response) {
+function httpRedirectFetch (fetchParams, response) {
   // 1. Let request be fetchParams’s request.
   const request = fetchParams.request
 
@@ -38526,18 +38527,18 @@ async function httpRedirectFetch (fetchParams, response) {
     }
   } catch (err) {
     // 5. If locationURL is failure, then return a network error.
-    return makeNetworkError(err)
+    return Promise.resolve(makeNetworkError(err))
   }
 
   // 6. If locationURL’s scheme is not an HTTP(S) scheme, then return a network
   // error.
   if (!urlIsHttpHttpsScheme(locationURL)) {
-    return makeNetworkError('URL scheme must be a HTTP(S) scheme')
+    return Promise.resolve(makeNetworkError('URL scheme must be a HTTP(S) scheme'))
   }
 
   // 7. If request’s redirect count is 20, then return a network error.
   if (request.redirectCount === 20) {
-    return makeNetworkError('redirect count exceeded')
+    return Promise.resolve(makeNetworkError('redirect count exceeded'))
   }
 
   // 8. Increase request’s redirect count by 1.
@@ -38551,7 +38552,7 @@ async function httpRedirectFetch (fetchParams, response) {
     (locationURL.username || locationURL.password) &&
     !sameOrigin(request, locationURL)
   ) {
-    return makeNetworkError('cross origin not allowed for request mode "cors"')
+    return Promise.resolve(makeNetworkError('cross origin not allowed for request mode "cors"'))
   }
 
   // 10. If request’s response tainting is "cors" and locationURL includes
@@ -38560,9 +38561,9 @@ async function httpRedirectFetch (fetchParams, response) {
     request.responseTainting === 'cors' &&
     (locationURL.username || locationURL.password)
   ) {
-    return makeNetworkError(
+    return Promise.resolve(makeNetworkError(
       'URL cannot contain credentials for request mode "cors"'
-    )
+    ))
   }
 
   // 11. If actualResponse’s status is not 303, request’s body is non-null,
@@ -38572,7 +38573,7 @@ async function httpRedirectFetch (fetchParams, response) {
     request.body != null &&
     request.body.source == null
   ) {
-    return makeNetworkError()
+    return Promise.resolve(makeNetworkError())
   }
 
   // 12. If one of the following is true
@@ -49629,7 +49630,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getPullRequest = exports.getPullRequests = exports.getUser = void 0;
+exports.getEvents = exports.getPullRequest = exports.getPullRequests = exports.getUser = void 0;
 const request = (environment, url, options = undefined) => __awaiter(void 0, void 0, void 0, function* () {
     const ghClient = environment.dependencies.ghClient;
     environment.dependencies.log.debug(`Requesting URL: ${url}`);
@@ -49673,6 +49674,98 @@ const getPullRequest = (environment, pullRequestNumber) => __awaiter(void 0, voi
     return mapPullRequest(data);
 });
 exports.getPullRequest = getPullRequest;
+// Events:
+const getEvents = (environment, pullRequestNumber) => __awaiter(void 0, void 0, void 0, function* () {
+    const url = `GET /repos/${environment.inputs.repoOwner}/${environment.inputs.repoName}/issues/${pullRequestNumber}/timeline`;
+    const data = yield request(environment, url);
+    return data.map(mapEvent);
+});
+exports.getEvents = getEvents;
+const mapEvent = (event) => ({
+    createdAt: event.created_at,
+    type: event.event
+});
+
+
+/***/ }),
+
+/***/ 8878:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getExpiredPullRequests = void 0;
+const github_api_client_1 = __nccwpck_require__(6301);
+const pull_request_expiration_1 = __nccwpck_require__(6558);
+const get_opened_at_1 = __nccwpck_require__(3561);
+const get_pull_requests_1 = __nccwpck_require__(624);
+const hasLabelToSkip = (environment, pullRequest) => environment.inputs.labelToSkipPR !== undefined &&
+    environment.inputs.labelToSkipPR !== '' &&
+    pullRequest.labels.has(environment.inputs.labelToSkipPR);
+const getExpiredPullRequests = (environment) => __awaiter(void 0, void 0, void 0, function* () {
+    const pullRequests = yield (0, get_pull_requests_1.getPullRequests)(environment);
+    const matchedPullRequests = pullRequests.filter((pullRequest) => pullRequest.state === 'open' &&
+        pullRequest.draft === false &&
+        pullRequest.requestedReviewers.length &&
+        !hasLabelToSkip(environment, pullRequest));
+    const pullRequestsWithEvents = yield Promise.all(matchedPullRequests.map((pullRequest) => __awaiter(void 0, void 0, void 0, function* () {
+        // eslint-disable-next-line github/no-then
+        return (0, github_api_client_1.getEvents)(environment, `${pullRequest.number}`).then((events) => ({
+            pullRequest,
+            events
+        }));
+    })));
+    return pullRequestsWithEvents.reduce((expiredPullRequests, { pullRequest, events }) => {
+        const openedAt = (0, get_opened_at_1.getOpenedAt)(pullRequest, events);
+        const expiration = (0, pull_request_expiration_1.pullRequestExpiration)(environment, pullRequest, openedAt);
+        if (expiration.isExpired) {
+            const expiredPullRequest = Object.assign(Object.assign({}, pullRequest), { openedAt, expiration: {
+                    ttl: expiration.ttl,
+                    expiredAt: expiration.at,
+                    label: expiration.label
+                } });
+            expiredPullRequests.push(expiredPullRequest);
+        }
+        return expiredPullRequests;
+    }, []);
+});
+exports.getExpiredPullRequests = getExpiredPullRequests;
+
+
+/***/ }),
+
+/***/ 3561:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getOpenedAt = void 0;
+const luxon_1 = __nccwpck_require__(8811);
+const getOpenedAt = (pullRequest, events) => {
+    const created = luxon_1.DateTime.fromISO(pullRequest.createdAt);
+    return events.reduce((current, event) => {
+        if (event.type === 'reopened' &&
+            event.createdAt !== undefined &&
+            luxon_1.DateTime.fromISO(event.createdAt) > current) {
+            return luxon_1.DateTime.fromISO(event.createdAt);
+        }
+        else {
+            return current;
+        }
+    }, created);
+};
+exports.getOpenedAt = getOpenedAt;
 
 
 /***/ }),
@@ -49692,33 +49785,52 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getExpiredPullRequests = void 0;
+exports.getPullRequests = void 0;
 const github_api_client_1 = __nccwpck_require__(6301);
-const pull_request_expiration_1 = __nccwpck_require__(6558);
-const hasLabelToSkip = (environment, pullRequest) => {
-    return (environment.inputs.labelToSkipPR !== undefined &&
-        environment.inputs.labelToSkipPR !== '' &&
-        pullRequest.labels.has(environment.inputs.labelToSkipPR));
-};
-const getExpiredPullRequests = (environment) => __awaiter(void 0, void 0, void 0, function* () {
+const getPullRequests = (environment) => __awaiter(void 0, void 0, void 0, function* () {
     const pullRequestNumber = environment.inputs.pullRequestNumber;
-    let pullRequests;
     if (pullRequestNumber !== undefined && pullRequestNumber !== '') {
         environment.dependencies.log.info(`Getting #${pullRequestNumber}`);
         const pullRequest = yield (0, github_api_client_1.getPullRequest)(environment, pullRequestNumber);
-        pullRequests = [pullRequest];
+        return [pullRequest];
     }
     else {
         environment.dependencies.log.info(`Getting all PR of the repo`);
-        pullRequests = yield (0, github_api_client_1.getPullRequests)(environment);
+        return (0, github_api_client_1.getPullRequests)(environment);
     }
-    return pullRequests.filter((pullRequest) => pullRequest.state === 'open' &&
-        pullRequest.draft === false &&
-        pullRequest.requestedReviewers.length &&
-        !hasLabelToSkip(environment, pullRequest) &&
-        (0, pull_request_expiration_1.isPullRequestExpired)(environment, pullRequest));
 });
-exports.getExpiredPullRequests = getExpiredPullRequests;
+exports.getPullRequests = getPullRequests;
+
+
+/***/ }),
+
+/***/ 7673:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getTTL = void 0;
+const getTTL = (environment, labels) => {
+    const expirationWithLabel = Array.from(labels).reduce((currentMatch, label) => {
+        const labelTTL = environment.inputs.labelsTTL[label];
+        if (labelTTL === undefined)
+            return currentMatch;
+        if (parseInt(labelTTL) >= currentMatch.ttl)
+            return currentMatch;
+        return { ttl: parseInt(labelTTL), label };
+    }, { ttl: Number.MAX_VALUE, label: undefined });
+    if (expirationWithLabel.label !== undefined) {
+        return expirationWithLabel;
+    }
+    else {
+        const defaultTTL = environment.inputs.defaultTTL
+            ? parseInt(environment.inputs.defaultTTL)
+            : Number.MAX_VALUE;
+        return { ttl: defaultTTL, label: undefined };
+    }
+};
+exports.getTTL = getTTL;
 
 
 /***/ }),
@@ -49774,12 +49886,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getNotifications = void 0;
-const get_pull_requests_1 = __nccwpck_require__(624);
+const get_expired_pull_requests_1 = __nccwpck_require__(8878);
 const get_users_1 = __nccwpck_require__(240);
 const notifications_builder_1 = __nccwpck_require__(7859);
 const getNotifications = (environment) => __awaiter(void 0, void 0, void 0, function* () {
     environment.dependencies.log.info(`Input: ${JSON.stringify(environment.inputs)}`);
-    const pullRequests = yield (0, get_pull_requests_1.getExpiredPullRequests)(environment);
+    const pullRequests = yield (0, get_expired_pull_requests_1.getExpiredPullRequests)(environment);
     environment.dependencies.log.info(`Expired pull requests: ${pullRequests.length}`);
     environment.dependencies.log.debug(`Expired pull requests: ${JSON.stringify(pullRequests)}`);
     const usersByLogin = yield (0, get_users_1.getUsersByLogin)(environment, pullRequests);
@@ -49810,7 +49922,19 @@ const buildNotificationsFrom = (pullRequests, usersByLogin) => pullRequests.redu
                     url: pullRequest.url,
                     number: pullRequest.number,
                     createdAt: pullRequest.createdAt,
-                    owner: pullRequest.owner
+                    owner: pullRequest.owner,
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    openedAt: pullRequest.openedAt
+                        .toUTC()
+                        .toISO({ suppressMilliseconds: true }),
+                    expiration: {
+                        label: pullRequest.expiration.label,
+                        ttl: pullRequest.expiration.ttl,
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                        expiredAt: pullRequest.expiration.expiredAt
+                            .toUTC()
+                            .toISO({ suppressMilliseconds: true }) // toUTC() => to format with 'Z' instead of adding '+01:00'
+                    }
                 },
                 recipient: usersByLogin[reviewer.login]
             });
@@ -49830,27 +49954,33 @@ exports.buildNotificationsFrom = buildNotificationsFrom;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.isPullRequestExpired = void 0;
+exports.pullRequestExpiration = void 0;
 const luxon_1 = __nccwpck_require__(8811);
-const isPullRequestExpired = (environment, pullRequest) => {
-    const created = luxon_1.DateTime.fromISO(pullRequest.createdAt);
+const get_ttl_1 = __nccwpck_require__(7673);
+const pullRequestExpiration = (environment, pullRequest, openedAt) => {
     const now = environment.dependencies.now();
-    const interval = luxon_1.Interval.fromDateTimes(created, now);
+    const interval = luxon_1.Interval.fromDateTimes(openedAt, now);
     const diffInSeconds = interval.length('seconds');
-    const ttl = Array.from(pullRequest.labels).reduce((currentTTL, label) => {
-        const labelTTL = environment.inputs.labelsTTL[label];
-        if (labelTTL !== undefined) {
-            return Math.min(parseInt(labelTTL), currentTTL);
-        }
-        return currentTTL;
-    }, environment.inputs.defaultTTL
-        ? parseInt(environment.inputs.defaultTTL)
-        : Number.MAX_VALUE);
-    const isExpired = diffInSeconds !== Number.MAX_VALUE && diffInSeconds > ttl;
-    environment.dependencies.log.debug(`Pull request #${pullRequest.number} created at: ${pullRequest.createdAt} (${diffInSeconds} seconds from now: ${now}) => ${isExpired ? 'Is Expired' : 'Not Expired yet'}`);
-    return isExpired;
+    const matched = (0, get_ttl_1.getTTL)(environment, pullRequest.labels);
+    const isExpired = diffInSeconds !== Number.MAX_VALUE && diffInSeconds > matched.ttl;
+    let result;
+    if (isExpired) {
+        const expiredResult = {
+            isExpired,
+            at: openedAt.plus({ seconds: matched.ttl }),
+            ttl: matched.ttl,
+            label: matched.label
+        };
+        result = expiredResult;
+    }
+    else {
+        const expiredResult = { isExpired };
+        result = expiredResult;
+    }
+    environment.dependencies.log.debug(`Pull request #${pullRequest.number} -> expiration: ${JSON.stringify(result)}`);
+    return result;
 };
-exports.isPullRequestExpired = isPullRequestExpired;
+exports.pullRequestExpiration = pullRequestExpiration;
 
 
 /***/ }),
