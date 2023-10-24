@@ -19,10 +19,10 @@ const devRun = async (): Promise<void> => {
         }
       },
       log: {
-        debug: console.debug,
-        info: console.info,
-        error: console.error,
-        warn: console.warn
+        debug: (message) => console.debug(`${message}\n`),
+        info: (message) => console.info(`${message}\n`),
+        error: (message) => console.error(`${message}\n`),
+        warn: (message) => console.warn(`${message}\n`)
       },
       now: () => DateTime.now()
     },

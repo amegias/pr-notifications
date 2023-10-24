@@ -8,7 +8,12 @@ import {
   buildUserDto
 } from '../../__tests__/mother';
 import { testEnvironment } from '../../__tests__/utils';
-import { getPullRequest, getPullRequests, getUser } from '../github-api-client';
+import {
+  getEvents,
+  getPullRequest,
+  getPullRequests,
+  getUser
+} from '../github-api-client';
 
 describe('getUser', () => {
   it('Given user data, returns the expected model', async () => {
@@ -100,5 +105,31 @@ describe('getPullRequest', () => {
         'anOwner'
       )
     );
+  });
+});
+
+describe('getEvents', () => {
+  it('Given event data, returns the expected model', async () => {
+    const environment = testEnvironment();
+    const eventDtos = [
+      { event: 'anyEvent1', created_at: 'anyCreatedAt1' },
+      { event: 'anyEvent2', created_at: 'anyCreatedAt2' }
+    ];
+    const requestMock = jest
+      .spyOn(environment.dependencies.ghClient, 'request')
+      .mockResolvedValue({
+        data: eventDtos
+      });
+
+    const user = await getEvents(environment, 'anyNumber');
+
+    expect(requestMock).toHaveBeenCalledWith(
+      'GET /repos/anyOwner/anyName/issues/anyNumber/timeline',
+      undefined
+    );
+    expect(user).toStrictEqual([
+      { createdAt: 'anyCreatedAt1', type: 'anyEvent1' },
+      { createdAt: 'anyCreatedAt2', type: 'anyEvent2' }
+    ]);
   });
 });

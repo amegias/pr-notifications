@@ -1,17 +1,18 @@
 import {
+  buildExpiredPullRequest,
   buildPullRequest,
   buildReviewer,
   buildUser
 } from '../../__tests__/mother';
 import { testEnvironment } from '../../__tests__/utils';
 import * as ghApiClient from '../../api/github-api-client';
-import { PullRequest } from '../../models/models';
+import { ExpiredPullRequest } from '../../models/models';
 import { getUsersByLogin } from '../get-users';
 
 describe('getUsersByLogin', () => {
   it('No pull requests returns []', async () => {
     const environment = testEnvironment();
-    const pullRequests: PullRequest[] = [];
+    const pullRequests: ExpiredPullRequest[] = [];
 
     const users = await getUsersByLogin(environment, pullRequests);
 
@@ -43,7 +44,7 @@ describe('getUsersByLogin', () => {
         ],
         'otherOwner'
       )
-    ];
+    ].map((pullRequest) => buildExpiredPullRequest(pullRequest));
 
     const users = await getUsersByLogin(environment, pullRequests);
 

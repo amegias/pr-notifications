@@ -2,6 +2,8 @@
 
 import {
   Environment,
+  Event,
+  EventDto,
   PullRequest,
   PullRequestDto,
   Reviewer,
@@ -71,3 +73,19 @@ export const getPullRequest = async (
   const data = await request(environment, url);
   return mapPullRequest(data as PullRequestDto);
 };
+
+// Events:
+
+export const getEvents = async (
+  environment: Environment,
+  pullRequestNumber: string
+): Promise<Event[]> => {
+  const url = `GET /repos/${environment.inputs.repoOwner}/${environment.inputs.repoName}/issues/${pullRequestNumber}/timeline`;
+  const data = await request(environment, url);
+  return (data as EventDto[]).map(mapEvent);
+};
+
+const mapEvent = (event: EventDto): Event => ({
+  createdAt: event.created_at,
+  type: event.event
+});

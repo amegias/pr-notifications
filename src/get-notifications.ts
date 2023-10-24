@@ -1,4 +1,4 @@
-import { getExpiredPullRequests } from './core/get-pull-requests';
+import { getExpiredPullRequests } from './core/get-expired-pull-requests';
 import { getUsersByLogin } from './core/get-users';
 import { buildNotificationsFrom } from './helpers/notifications-builder';
 import { Environment, Notification } from './models/models';

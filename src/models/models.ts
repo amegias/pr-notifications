@@ -53,7 +53,13 @@ export type Notification = {
     url: string;
     number: number;
     createdAt: string;
+    openedAt: string;
     owner: string;
+    expiration: {
+      ttl: number;
+      expiredAt: string;
+      label?: string;
+    };
   };
   recipient: User;
 };
@@ -90,4 +96,43 @@ export type PullRequestDto = {
 
 export type PullRequestUserDto = {
   login: string;
+};
+
+export type MatchedTTL = {
+  ttl: number;
+  label?: string;
+};
+
+export type ExpirationResult = ExpiredResult | NotExpiredResult;
+
+export type ExpiredResult = {
+  isExpired: true;
+  at: DateTime;
+  ttl: number;
+  label?: string;
+};
+
+export type NotExpiredResult = {
+  isExpired: false;
+};
+
+type Expiration = {
+  ttl: number;
+  label?: string;
+  expiredAt: DateTime;
+};
+
+export type ExpiredPullRequest = PullRequest & {
+  expiration: Expiration;
+  openedAt: DateTime;
+};
+
+export type EventDto = {
+  event: string;
+  created_at?: string;
+};
+
+export type Event = {
+  type: string;
+  createdAt?: string;
 };
