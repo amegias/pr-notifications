@@ -1,4 +1,6 @@
+import { DateTime } from 'luxon';
 import {
+  ExpiredPullRequest,
   LabelDto,
   PullRequest,
   PullRequestDto,
@@ -66,6 +68,23 @@ export const buildPullRequest = (
   requestedReviewers,
   state,
   owner
+});
+
+export const buildExpiredPullRequest = (
+  pullRequest: PullRequest,
+  openedAt: DateTime = DateTime.fromISO(pullRequest.createdAt).plus({
+    second: 1
+  })
+): ExpiredPullRequest => ({
+  ...pullRequest,
+  openedAt,
+  expiration: {
+    ttl: 1000,
+    expiredAt: DateTime.fromISO(pullRequest.createdAt).plus({
+      hours: pullRequest.id
+    }),
+    label: `anyLabel${pullRequest.id}`
+  }
 });
 
 export const buildLabelDto = (id: number): LabelDto => ({

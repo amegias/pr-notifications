@@ -1,34 +1,43 @@
 import { DateTime, Interval } from 'luxon';
-import { Environment, PullRequest } from '../models/models';
+import { getTTL } from '../core/get-ttl';
+import {
+  Environment,
+  ExpirationResult,
+  ExpiredResult,
+  NotExpiredResult,
+  PullRequest
+} from '../models/models';
 
-export const isPullRequestExpired = (
+export const pullRequestExpiration = (
   environment: Environment,
-  pullRequest: PullRequest
-): boolean => {
-  const created = DateTime.fromISO(pullRequest.createdAt);
+  pullRequest: PullRequest,
+  openedAt: DateTime
+): ExpirationResult => {
   const now = environment.dependencies.now();
-  const interval = Interval.fromDateTimes(created, now);
+  const interval = Interval.fromDateTimes(openedAt, now);
   const diffInSeconds = interval.length('seconds');
-  const ttl = Array.from(pullRequest.labels).reduce(
-    (currentTTL, label) => {
-      const labelTTL = environment.inputs.labelsTTL[label];
-      if (labelTTL !== undefined) {
-        return Math.min(parseInt(labelTTL), currentTTL);
-      }
-      return currentTTL;
-    },
-    environment.inputs.defaultTTL
-      ? parseInt(environment.inputs.defaultTTL)
-      : Number.MAX_VALUE
-  );
+  const matched = getTTL(environment, pullRequest.labels);
+  const isExpired =
+    diffInSeconds !== Number.MAX_VALUE && diffInSeconds > matched.ttl;
 
-  const isExpired = diffInSeconds !== Number.MAX_VALUE && diffInSeconds > ttl;
+  let result: ExpirationResult;
+  if (isExpired) {
+    const expiredResult: ExpiredResult = {
+      isExpired,
+      at: openedAt.plus({ seconds: matched.ttl }),
+      ttl: matched.ttl,
+      label: matched.label
+    };
+    result = expiredResult;
+  } else {
+    const expiredResult: NotExpiredResult = { isExpired };
+    result = expiredResult;
+  }
+
   environment.dependencies.log.debug(
-    `Pull request #${pullRequest.number} created at: ${
-      pullRequest.createdAt
-    } (${diffInSeconds} seconds from now: ${now}) => ${
-      isExpired ? 'Is Expired' : 'Not Expired yet'
-    }`
+    `Pull request #${pullRequest.number} -> expiration: ${JSON.stringify(
+      result
+    )}`
   );
-  return isExpired;
+  return result;
 };

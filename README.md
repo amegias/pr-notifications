@@ -3,7 +3,8 @@
 # PR-Notifications action
 
 This action generates notifications for expired pull requests. A pull request is considered expired depending on the `default-ttl` and/or `labels-ttl`.
-Given a default PR TTL and a set of TTL per label, it calculates if the PR is expired or not. If it is, it will generate notifications for its pending reviewers.
+Given a default PR TTL and a set of TTL per label, it calculates if the PR is expired or not based on its creation date and the last `reopened` event. If it is, it will generate notifications for its pending reviewers.
+The PRs without reviewers and draft PRs will be discarded.
 
 ## Inputs
 
@@ -18,7 +19,7 @@ If it is null, the pull request will not be expired by default.
 
 ### `labels-ttl` (Optional)
 
-TTLs by labels. If the pull request contains any label of them, the action will take that TTL to calculate the **MIN value** to decide if it is expired or not.
+TTLs by labels. If the pull request contains any label of them, the action will take the MIN TTL of the matched labels to decide if it is expired or not.
 
 ### `pull-request-number` (Optional)
 
@@ -60,63 +61,61 @@ An array of notifications with the pull request and recipient info.
 ```json
 [
   {
-    "pullRequest":{
-      "id":2,
-      "title":"My PR #2",
-      "url":"https://api.github.com/repos/me/myrepo/pulls/2",
-      "owner": "anOwner"
+    "pullRequest": {
+      "id": 1,
+      "title": "My PR #1",
+      "url": "https://api.github.com/repos/me/myrepo/pulls/1",
+      "number": 1,
+      "createdAt": "2023-04-03T07:52:45Z",
+      "owner": "anOwner",
+      "openedAt": "2023-10-22T20:46:04Z",
+      "expiration": {
+        "ttl": 1,
+        "expiredAt": "2023-10-22T20:46:05Z"
+      }
     },
-    "recipient":{
-      "login":"login2",
-      "email":"2@email.com"
+    "recipient": {
+      "login": "login1",
+      "email": "1@email.com"
     }
   },
   {
-    "pullRequest":{
-      "id":2,
-      "title":"My PR #2",
-      "url":"https://api.github.com/repos/me/myrepo/pulls/2",
-      "owner": "anOwner"
+    "pullRequest": {
+      "id": 1,
+      "title": "My PR #1",
+      "url": "https://api.github.com/repos/me/myrepo/pulls/1",
+      "number": 1,
+      "createdAt": "2023-04-03T07:52:45Z",
+      "owner": "anOwner",
+      "openedAt": "2023-10-22T20:46:04Z",
+      "expiration": {
+        "ttl": 1,
+        "expiredAt": "2023-10-22T20:46:05Z"
+      }
     },
-    "recipient":{
-      "login":"login3",
-      "email":"3@email.com"
+    "recipient": {
+      "login": "login2",
+      "email": "2@email.com"
     }
   },
   {
-    "pullRequest":{
-      "id":3,
-      "title":"My PR #3",
-      "url":"https://api.github.com/repos/me/myrepo/pulls/3",
-      "owner": "otherOwner"
+    "pullRequest": {
+      "id": 2,
+      "title": "My PR #2",
+      "url": "https://api.github.com/repos/me/myrepo/pulls/1",
+      "number": 2,
+      "createdAt": "2023-04-03T07:52:45Z",
+      "owner": "anOwner",
+      "openedAt": "2023-10-22T20:46:04Z",
+      "expiration": {
+        "ttl": 1,
+        "expiredAt": "2023-10-22T20:46:05Z",
+        "label": "anyLabel"
+      }
     },
-    "recipient":{
-      "login":"login3",
-      "email":"3@email.com"
-    }
-  },
-  {
-    "pullRequest":{
-      "id":3,
-      "title":"My PR #3",
-      "url":"https://api.github.com/repos/me/myrepo/pulls/3",
-      "owner": "otherOwner"
-    },
-    "recipient":{
-      "login":"login4",
-      "email":"4@email.com"
-    }
-  },
-  {
-    "pullRequest":{
-      "id":3,
-      "title":"My PR #3",
-      "url":"https://api.github.com/repos/me/myrepo/pulls/3",
-      "owner": "otherOwner"
-    },
-    "recipient":{
-      "login":"login5",
-      "email":"5@email.com"
+    "recipient": {
+      "login": "login1",
+      "email": "1@email.com"
     }
   }
 ]

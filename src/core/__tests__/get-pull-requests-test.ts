@@ -1,152 +1,45 @@
-import { buildPullRequest, buildReviewer } from '../../__tests__/mother';
+import { buildPullRequest } from '../../__tests__/mother';
 import { testEnvironment } from '../../__tests__/utils';
-import * as ghApiClient from '../../api/github-api-client';
-import * as pullRequestExpiration from '../../helpers/pull-request-expiration';
-import { PullRequest } from '../../models/models';
-import { getExpiredPullRequests } from '../get-pull-requests';
+import { getPullRequests } from '../get-pull-requests';
+import * as api from '../../api/github-api-client';
 
-const LABEL_TO_SKIP_PR = 'labelToSkipPR';
-const expiredPullRequest = (id: number): PullRequest =>
-  buildPullRequest(
-    id,
-    new Set(),
-    [buildReviewer(11), buildReviewer(22)],
-    'anOwner',
-    false,
-    'open'
-  );
-
-const closedPullRequest = (id: number): PullRequest => ({
-  ...expiredPullRequest(id),
-  state: 'closed'
-});
-const draftPullRequest = (id: number): PullRequest => ({
-  ...expiredPullRequest(id),
-  draft: true
-});
-const pullRequestWithNoReviewers = (id: number): PullRequest => ({
-  ...expiredPullRequest(id),
-  requestedReviewers: []
-});
-const pullRequestWithLabelToBeSkipped = (id: number): PullRequest => ({
-  ...expiredPullRequest(id),
-  labels: new Set([LABEL_TO_SKIP_PR])
-});
-const notExpiredPullRequest = expiredPullRequest(10);
-
-describe('getExpiredPullRequests', () => {
-  beforeEach(() => {
+describe('getPullRequests', () => {
+  it('Empty pullRequestNumber returns all pull requests', async () => {
+    const environment = testEnvironment();
+    environment.inputs.pullRequestNumber = '';
+    const pullRequestA = buildPullRequest(1, new Set(), [], 'anyOwner1');
+    const pullRequestB = buildPullRequest(2, new Set(), [], 'anyOwner2');
     jest
-      .spyOn(pullRequestExpiration, 'isPullRequestExpired')
-      .mockImplementation(
-        (_, pullRequest) => notExpiredPullRequest.id !== pullRequest.id
-      );
+      .spyOn(api, 'getPullRequests')
+      .mockResolvedValue([pullRequestA, pullRequestB]);
+
+    const result = await getPullRequests(environment);
+
+    expect(result).toStrictEqual([pullRequestA, pullRequestB]);
   });
 
-  it('returns pull requests which are open & not draft & with reviewers & without label to skip & expired', async () => {
+  it('Undefined pullRequestNumber returns all pull requests', async () => {
     const environment = testEnvironment();
     environment.inputs.pullRequestNumber = undefined;
-    environment.inputs.labelToSkipPR = LABEL_TO_SKIP_PR;
+    const pullRequestA = buildPullRequest(1, new Set(), [], 'anyOwner1');
+    const pullRequestB = buildPullRequest(2, new Set(), [], 'anyOwner2');
+    jest
+      .spyOn(api, 'getPullRequests')
+      .mockResolvedValue([pullRequestA, pullRequestB]);
 
-    const pullRequests = [
-      expiredPullRequest(1),
-      closedPullRequest(2),
-      expiredPullRequest(3),
-      draftPullRequest(4),
-      expiredPullRequest(5),
-      pullRequestWithNoReviewers(6),
-      expiredPullRequest(7),
-      pullRequestWithLabelToBeSkipped(8),
-      expiredPullRequest(9),
-      notExpiredPullRequest,
-      expiredPullRequest(11)
-    ];
+    const result = await getPullRequests(environment);
 
-    jest.spyOn(ghApiClient, 'getPullRequests').mockResolvedValue(pullRequests);
-
-    const filteredPullRequests = await getExpiredPullRequests(environment);
-    expect(filteredPullRequests).toStrictEqual([
-      expiredPullRequest(1),
-      expiredPullRequest(3),
-      expiredPullRequest(5),
-      expiredPullRequest(7),
-      expiredPullRequest(9),
-      expiredPullRequest(11)
-    ]);
+    expect(result).toStrictEqual([pullRequestA, pullRequestB]);
   });
 
-  it('returns filtered pull requests when label to skip PR is not set', async () => {
+  it('Any pullRequestNumber returns that pull request', async () => {
     const environment = testEnvironment();
-    environment.inputs.pullRequestNumber = undefined;
-    environment.inputs.labelToSkipPR = undefined;
+    environment.inputs.pullRequestNumber = '23';
+    const pullRequest = buildPullRequest(1, new Set(), [], 'anyOwner1');
+    jest.spyOn(api, 'getPullRequest').mockResolvedValue(pullRequest);
 
-    const pullRequests = [
-      expiredPullRequest(1),
-      closedPullRequest(2),
-      expiredPullRequest(3),
-      draftPullRequest(4),
-      expiredPullRequest(5),
-      pullRequestWithNoReviewers(6),
-      expiredPullRequest(7),
-      pullRequestWithLabelToBeSkipped(8),
-      expiredPullRequest(9),
-      notExpiredPullRequest,
-      expiredPullRequest(11)
-    ];
+    const result = await getPullRequests(environment);
 
-    jest.spyOn(ghApiClient, 'getPullRequests').mockResolvedValue(pullRequests);
-
-    const filteredPullRequests = await getExpiredPullRequests(environment);
-    expect(filteredPullRequests).toStrictEqual([
-      expiredPullRequest(1),
-      expiredPullRequest(3),
-      expiredPullRequest(5),
-      expiredPullRequest(7),
-      pullRequestWithLabelToBeSkipped(8),
-      expiredPullRequest(9),
-      expiredPullRequest(11)
-    ]);
-  });
-
-  it.each([
-    [
-      'Expired pull request is returned',
-      expiredPullRequest(1),
-      [expiredPullRequest(1)]
-    ],
-    ['Closed pull request is filtered out', closedPullRequest(1), []],
-    ['Draft pull request is filtered out', draftPullRequest(1), []],
-    [
-      'Pull request with no reviewers is filtered out',
-      pullRequestWithNoReviewers(1),
-      []
-    ],
-    [
-      'Pull request with label to be skipped is filtered out',
-      pullRequestWithLabelToBeSkipped(1),
-      []
-    ],
-    ['Not expired pull request is filtered out', notExpiredPullRequest, []]
-  ])('%s', async (_, pullRequest, expected) => {
-    const environment = testEnvironment();
-    environment.inputs.pullRequestNumber = `${pullRequest.id}`;
-    environment.inputs.labelToSkipPR = LABEL_TO_SKIP_PR;
-
-    jest.spyOn(ghApiClient, 'getPullRequest').mockResolvedValue(pullRequest);
-
-    const filteredPullRequests = await getExpiredPullRequests(environment);
-    expect(filteredPullRequests).toStrictEqual(expected);
-  });
-
-  it('Pull request with label to be skipped is not skipped when labelToSkipPR is not set', async () => {
-    const environment = testEnvironment();
-    const pullRequest = pullRequestWithLabelToBeSkipped(1);
-    environment.inputs.pullRequestNumber = `${pullRequest.id}`;
-    environment.inputs.labelToSkipPR = undefined;
-
-    jest.spyOn(ghApiClient, 'getPullRequest').mockResolvedValue(pullRequest);
-
-    const filteredPullRequests = await getExpiredPullRequests(environment);
-    expect(filteredPullRequests).toStrictEqual([pullRequest]);
+    expect(result).toStrictEqual([pullRequest]);
   });
 });

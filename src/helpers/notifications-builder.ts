@@ -1,7 +1,7 @@
-import { Notification, PullRequest, User } from '../models/models';
+import { ExpiredPullRequest, Notification, User } from '../models/models';
 
 export const buildNotificationsFrom = (
-  pullRequests: PullRequest[],
+  pullRequests: ExpiredPullRequest[],
   usersByLogin: { [login: string]: User }
 ): Notification[] =>
   pullRequests.reduce((notifications, pullRequest) => {
@@ -15,7 +15,19 @@ export const buildNotificationsFrom = (
               url: pullRequest.url,
               number: pullRequest.number,
               createdAt: pullRequest.createdAt,
-              owner: pullRequest.owner
+              owner: pullRequest.owner,
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+              openedAt: pullRequest.openedAt
+                .toUTC()
+                .toISO({ suppressMilliseconds: true })!, // toUTC() => to format with 'Z' instead of adding '+01:00'
+              expiration: {
+                label: pullRequest.expiration.label,
+                ttl: pullRequest.expiration.ttl,
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                expiredAt: pullRequest.expiration.expiredAt
+                  .toUTC()
+                  .toISO({ suppressMilliseconds: true })! // toUTC() => to format with 'Z' instead of adding '+01:00'
+              }
             },
             recipient: usersByLogin[reviewer.login]
           });
