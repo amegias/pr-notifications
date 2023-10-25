@@ -18,7 +18,7 @@ export const pullRequestExpiration = (
   const diffInSeconds = interval.length('seconds');
   const matched = getTTL(environment, pullRequest.labels);
   const isExpired =
-    diffInSeconds !== Number.MAX_VALUE && diffInSeconds > matched.ttl;
+    diffInSeconds !== Number.MAX_VALUE && diffInSeconds >= matched.ttl;
 
   let result: ExpirationResult;
   if (isExpired) {
