@@ -18,10 +18,10 @@ describe('pullRequestExpiration', () => {
       false
     ],
     [
-      `TTL equal to interval between now and openedAt returns not-expired`,
+      `TTL equal to interval between now and openedAt returns expired`,
       DateTime.fromISO('2023-01-26T00:00:00Z'),
       86400 /* 1d */,
-      false
+      true
     ],
     [
       `TTL less than interval between now and openedAt returns expired`,
